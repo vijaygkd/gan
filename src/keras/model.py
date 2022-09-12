@@ -1,3 +1,7 @@
+"""
+Guide: https://www.tensorflow.org/guide/keras/customizing_what_happens_in_fit
+"""
+
 from tensorflow.keras import layers
 import tensorflow as tf
 
@@ -30,7 +34,7 @@ class GAN(tf.keras.Model):
         return model
 
     def sample_random_noise(self, batch_size):
-        random_noise = tf.random.normal(shape=(batch_size, self.latent_dim))
+        random_noise = tf.random.normal(shape=(batch_size, self.noise_dim))
         return random_noise
 
     def compile(self, d_optimizer, g_optimizer, loss_fn):
@@ -49,7 +53,11 @@ class GAN(tf.keras.Model):
         random_noise = self.sample_random_noise(batch_size)
         fake_images = self.generator(random_noise)
         combine_images = tf.concat([real_images, fake_images], axis=0)
+        # true image : 1 / fake image: 0
         labels = tf.concat([tf.ones((batch_size, 1)), tf.zeros((batch_size, 1))], axis=0)
+        # Add random noise to the labels - important trick!
+        labels += 0.05 * tf.random.uniform(tf.shape(labels))
+
         with tf.GradientTape() as tape:
             predictions = self.discriminator(combine_images)
             d_loss = self.loss_fn(labels, predictions)
