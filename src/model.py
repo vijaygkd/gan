@@ -8,6 +8,7 @@ class GAN(tf.keras.Model):
         self.generator = self.init_generator()
         self.discriminator = self.init_discriminator()
         self.latent_dim = 28*28
+        print("Hello 1")
 
     @staticmethod
     def init_generator():
@@ -38,9 +39,10 @@ class GAN(tf.keras.Model):
         self.loss_fn = loss_fn
 
     def train_step(self, real_images):
-        images = real_images[0]
-        batch_size = len(images)
-        images_flat = images.reshape((28 * 28), axis=1)
+        if isinstance(real_images, tuple):
+            real_images = real_images[0]
+        batch_size = tf.shape(real_images)[0]
+        images_flat = tf.reshape(real_images, (-1, 28 * 28))
 
         # Discriminator training
         random_noise = self.sample_random_noise(batch_size)
@@ -62,7 +64,7 @@ class GAN(tf.keras.Model):
         with tf.GradientTape() as tape:
             fake_images = self.generator(random_noise)
             predictions = self.discriminator(fake_images)
-            g_loss = -1 * self.loss_fn(labels, predictions)
+            g_loss = self.loss_fn(labels, predictions) * -1     # maximize loss for discriminator
 
         grads = tape.gradient(g_loss, self.generator.trainable_weights)
         self.g_optimizer.apply_gradients(
