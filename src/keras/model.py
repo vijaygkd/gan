@@ -12,14 +12,13 @@ class GAN(tf.keras.Model):
         self.noise_dim = 28*28     # noise input dimension
         self.generator = self.init_generator(self.noise_dim)
         self.discriminator = self.init_discriminator()
-
-        print("Hello 1")
+        print("Hello 3")
 
     @staticmethod
     def init_generator(noise_dim):
         input = layers.Input(shape=(noise_dim, ))
-        h = layers.Dense(256, activation='relu')(input)
-        h = layers.Dense(128, activation='relu')(h)
+        h = layers.Dense(2048, activation='relu')(input)
+        h = layers.Dense(1024, activation='relu')(h)
         output = layers.Dense(28*28, activation='sigmoid')(h)       # generated image has values between 0-1
         model = tf.keras.Model(inputs=input, outputs=output, name='generator')
         return model
@@ -55,8 +54,10 @@ class GAN(tf.keras.Model):
         combine_images = tf.concat([real_images, fake_images], axis=0)
         # true image : 1 / fake image: 0
         labels = tf.concat([tf.ones((batch_size, 1)), tf.zeros((batch_size, 1))], axis=0)
+
+        # label smoothening
         # Add random noise to the labels - important trick!
-        labels += 0.05 * tf.random.uniform(tf.shape(labels))
+        # labels += 0.05 * tf.random.uniform(tf.shape(labels))    # <--- makes d_loss negative which should not be possible??
 
         with tf.GradientTape() as tape:
             predictions = self.discriminator(combine_images)
@@ -82,4 +83,48 @@ class GAN(tf.keras.Model):
         )
 
         return {'d_loss': d_loss, 'g_loss': g_loss}
+
+
+class GAN_CNN(GAN):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.noise_dim = 128     # noise input dimension
+        self.generator = self.init_generator(self.noise_dim)
+        self.discriminator = self.init_discriminator()
+        print("Hello cnn")
+
+    @staticmethod
+    def init_generator(noise_dim):
+        generator = layers.Sequential(
+            [
+                layers.Input(shape=(noise_dim,)),
+                # We want to generate 128 coefficients to reshape into a 7x7x128 map
+                layers.Dense(7 * 7 * 128),
+                layers.LeakyReLU(alpha=0.2),
+                layers.Reshape((7, 7, 128)),
+                layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding="same"),
+                layers.LeakyReLU(alpha=0.2),
+                layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding="same"),
+                layers.LeakyReLU(alpha=0.2),
+                layers.Conv2D(1, (7, 7), padding="same", activation="sigmoid"),
+            ],
+            name="generator",
+        )
+        return generator
+
+    @staticmethod
+    def init_discriminator():
+        discriminator = tf.keras.Sequential(
+            [
+                layers.Input(shape=(28, 28, 1)),
+                layers.Conv2D(64, (3, 3), strides=(2, 2), padding="same"),
+                layers.LeakyReLU(alpha=0.2),
+                layers.Conv2D(128, (3, 3), strides=(2, 2), padding="same"),
+                layers.LeakyReLU(alpha=0.2),
+                layers.GlobalMaxPooling2D(),
+                layers.Dense(1),
+            ],
+            name="discriminator",
+        )
+        return discriminator
 
