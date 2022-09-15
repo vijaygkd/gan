@@ -95,9 +95,9 @@ class GAN_CNN(GAN):
 
     @staticmethod
     def init_generator(noise_dim):
-        generator = layers.Sequential(
+        generator = tf.keras.Sequential(
             [
-                layers.Input(shape=(noise_dim,)),
+                tf.keras.Input(shape=(noise_dim,)),
                 # We want to generate 128 coefficients to reshape into a 7x7x128 map
                 layers.Dense(7 * 7 * 128),
                 layers.LeakyReLU(alpha=0.2),
@@ -116,7 +116,7 @@ class GAN_CNN(GAN):
     def init_discriminator():
         discriminator = tf.keras.Sequential(
             [
-                layers.Input(shape=(28, 28, 1)),
+                tf.keras.Input(shape=(28, 28, 1)),
                 layers.Conv2D(64, (3, 3), strides=(2, 2), padding="same"),
                 layers.LeakyReLU(alpha=0.2),
                 layers.Conv2D(128, (3, 3), strides=(2, 2), padding="same"),
