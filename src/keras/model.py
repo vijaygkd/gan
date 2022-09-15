@@ -122,7 +122,7 @@ class GAN_CNN(GAN):
                 layers.Conv2D(128, (3, 3), strides=(2, 2), padding="same"),
                 layers.LeakyReLU(alpha=0.2),
                 layers.GlobalMaxPooling2D(),
-                layers.Dense(1),
+                layers.Dense(1, activation='sigmoid'),
             ],
             name="discriminator",
         )
