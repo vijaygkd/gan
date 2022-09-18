@@ -102,10 +102,13 @@ class GAN_CNN(GAN):
                 layers.Dense(7 * 7 * 128),
                 layers.LeakyReLU(alpha=0.2),
                 layers.Reshape((7, 7, 128)),
+                # upscale to 14x14 feature map
                 layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding="same"),
                 layers.LeakyReLU(alpha=0.2),
+                # upscale to 28x28 feature map
                 layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding="same"),
                 layers.LeakyReLU(alpha=0.2),
+                # convert to 28x28x1 gray scale images
                 layers.Conv2D(1, (7, 7), padding="same", activation="sigmoid"),
             ],
             name="generator",
